@@ -48,6 +48,21 @@ jobs:
       - run: echo "This is an integration step"
       - run: exit 1
         continue-on-error: true
+    
+  zap_baseline:
+    runs-on: ubuntu-20.04
+    needs: test
+    steps:
+      - run: |
+           docker pull softwaresecurityproject/zap-stable:2.14.0
+           docker run --user root --rm -v $(pwd):/zap/wrk:rw -w /zap softwaresecurityproject/zap-stable:2.14.0 zap-baseline.py -t ${{ secrets.PROD_URL }} -J zap-output.json
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ZAP Scan
+          path: zap-output.json
+        if: always()        # what is this for?
 
   prod:
     runs-on: ubuntu-20.04
